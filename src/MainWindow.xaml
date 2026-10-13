@@ -17,7 +17,7 @@
     </Window.TaskbarItemInfo>
     <WindowChrome.WindowChrome>
         <!-- Our own title bar: the navigation bar doubles as caption. -->
-        <WindowChrome CaptionHeight="48" ResizeBorderThickness="6" CornerRadius="0"
+        <WindowChrome CaptionHeight="48" ResizeBorderThickness="5" CornerRadius="0"
                       GlassFrameThickness="0,0,0,1" UseAeroCaptionButtons="False" />
     </WindowChrome.WindowChrome>
     <Grid x:Name="Root">
@@ -26,6 +26,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <local:NavBar x:Name="Nav" />
-        <wv2:WebView2 x:Name="Web" Grid.Row="1" DefaultBackgroundColor="#121212" />
+        <!-- WebView2 is a child HWND and swallows mouse input, so keep the resize border free of it. -->
+        <wv2:WebView2 x:Name="Web" Grid.Row="1" Margin="5,0,5,5" DefaultBackgroundColor="#121212" />
     </Grid>
 </Window>

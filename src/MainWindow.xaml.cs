@@ -118,9 +118,9 @@ public partial class MainWindow : Window
     /// <summary>A maximized chromeless window overhangs the screen by its frame; pad the content back in.</summary>
     private void FitMaximizedWindow()
     {
-        Root.Margin = WindowState == WindowState.Maximized
-            ? Native.MaximizedFrameThickness(new WindowInteropHelper(this).Handle)
-            : new Thickness(0);
+        bool maximized = WindowState == WindowState.Maximized;
+        Root.Margin = maximized ? Native.MaximizedFrameThickness(new WindowInteropHelper(this).Handle) : new Thickness(0);
+        Web.Margin = maximized ? new Thickness(0) : new Thickness(5, 0, 5, 5);
     }
 
     private void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
