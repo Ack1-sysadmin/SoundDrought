@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SoundDrought – SoundCloud for Windows</title>
+  <meta name="description" content="A slim desktop app for SoundCloud on Windows. Media keys, tray, mini player, Discord status. Not a single cloud in sight.">
+  <meta property="og:title" content="SoundDrought – SoundCloud for Windows">
+  <meta property="og:description" content="SoundCloud. Not a single cloud in sight.">
+  <meta property="og:image" content="icon.png">
+  <link rel="icon" href="icon.png">
+  <style>
+    :root {
+      --bg: #120d0a;
+      --bg-2: #1b1410;
+      --card: #211913;
+      --line: #3a2b20;
+      --text: #f6efe9;
+      --muted: #b9a89a;
+      --sun-1: #ffb020;
+      --sun-2: #ff4800;
+      --radius: 18px;
+      --max: 1080px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.6 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 20px; }
+
+    /* Hero */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 96px 0 72px;
+      text-align: center;
+      background:
+        radial-gradient(600px 380px at 50% -60px, rgba(255, 140, 0, .35), transparent 70%),
+        radial-gradient(900px 500px at 50% 0, rgba(255, 72, 0, .12), transparent 70%);
+    }
+    .hero img { width: 112px; height: 112px; filter: drop-shadow(0 12px 40px rgba(255, 100, 0, .45)); }
+    h1 {
+      margin: 22px 0 8px;
+      font-size: clamp(40px, 7vw, 68px);
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+      font-weight: 700;
+    }
+    .tagline { font-size: clamp(18px, 2.6vw, 24px); color: var(--muted); margin: 0 0 6px; }
+    .tagline b { color: var(--text); font-weight: 600; }
+    .sub { color: var(--muted); max-width: 560px; margin: 14px auto 34px; }
+    .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 24px; border-radius: 999px;
+      text-decoration: none; font-weight: 600;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--sun-1), var(--sun-2));
+      color: #1a0b00;
+      box-shadow: 0 10px 30px rgba(255, 90, 0, .35);
+    }
+    .btn-primary:hover { box-shadow: 0 14px 38px rgba(255, 90, 0, .5); }
+    .btn-ghost { border: 1px solid var(--line); background: rgba(255, 255, 255, .02); }
+    .btn-ghost:hover { background: rgba(255, 255, 255, .06); }
+    .btn svg { width: 18px; height: 18px; }
+    .meta { margin-top: 14px; font-size: 13px; color: var(--muted); }
+
+    /* Mini player mockup */
+    .showcase { padding: 24px 0 80px; display: flex; justify-content: center; }
+    .mini {
+      width: min(420px, 100%);
+      display: grid; grid-template-columns: 112px 1fr;
+      background: #181818; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .06);
+      font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+      color: #f2f2f2;
+      transform: rotate(-1.5deg);
+    }
+    .mini-art {
+      background:
+        radial-gradient(circle at 50% 50%, #fff 0 22%, transparent 23%),
+        conic-gradient(from 0deg, #ffb020, #ff6a00, #ff3d00, #ffb020);
+      min-height: 112px;
+    }
+    .mini-body { padding: 10px 14px 0; display: flex; flex-direction: column; }
+    .mini-title { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mini-artist { font-size: 12.5px; color: #a0a0a0; }
+    .mini-row { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-bottom: 8px; }
+    .mini-controls { display: flex; gap: 2px; margin-left: -8px; }
+    .mini-controls span {
+      width: 36px; height: 32px; display: grid; place-items: center; border-radius: 6px; color: #d0d0d0;
+    }
+    .mini-controls span:hover { background: #2c2c2c; color: #fff; }
+    .mini-controls svg { width: 16px; height: 16px; fill: currentColor; }
+    .mini-controls .play svg { width: 20px; height: 20px; }
+    .mini-controls .liked { color: #ff5500; }
+    .mini-time { font-size: 11px; color: #808080; }
+    .mini-bar { grid-column: 2; height: 4px; background: #2a2a2a; }
+    .mini-bar i { display: block; height: 100%; width: 38%; background: #ff5500; animation: play 40s linear infinite; }
+    @keyframes play { from { width: 0; } to { width: 100%; } }
+    @media (prefers-reduced-motion: reduce) { .mini-bar i { animation: none; } }
+
+    /* Features */
+    section h2 {
+      font-size: clamp(26px, 3.6vw, 34px); letter-spacing: -.01em; margin: 0 0 8px; text-align: center;
+      font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    }
+    .lead { text-align: center; color: var(--muted); margin: 0 auto 36px; max-width: 600px; }
+    .features { padding: 40px 0 72px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .card {
+      background: linear-gradient(180deg, var(--card), var(--bg-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+    .card .ico {
+      width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+      background: linear-gradient(135deg, rgba(255, 176, 32, .18), rgba(255, 72, 0, .18));
+      color: var(--sun-1); margin-bottom: 14px; font-size: 20px;
+    }
+    .card h3 { margin: 0 0 6px; font-size: 17px; }
+    .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+    kbd {
+      font: 12px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+      padding: 3px 6px; border-radius: 6px; border: 1px solid var(--line); background: #2a1f17; color: var(--text);
+    }
+
+    /* FAQ */
+    .faq { padding: 24px 0 80px; }
+    .faq-list { max-width: 720px; margin: 0 auto; }
+    details {
+      border: 1px solid var(--line); border-radius: 14px; padding: 16px 20px; margin-bottom: 10px; background: var(--bg-2);
+    }
+    summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; color: var(--sun-1); font-size: 20px; line-height: 1; }
+    details[open] summary::after { content: "–"; }
+    details p { color: var(--muted); margin: 10px 0 0; }
+    code { font: 13.5px ui-monospace, "Cascadia Mono", Consolas, monospace; background: #2a1f17; padding: 2px 6px; border-radius: 6px; }
+
+    footer {
+      border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 13px; text-align: center;
+    }
+    footer a { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="wrap">
+      <img src="icon.png" alt="" width="112" height="112">
+      <h1>SoundDrought</h1>
+      <p class="tagline"><b>SoundCloud for Windows.</b> Not a single cloud in sight. ☀️</p>
+      <p class="sub">
+        A tiny desktop app that runs the real SoundCloud with everything a browser tab can't do:
+        media keys, tray, mini player and Discord status.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/Ack1-sysadmin/SoundDrought/releases/latest/download/SoundDrought.exe">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
+          Download for Windows
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/Ack1-sysadmin/SoundDrought">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.4-1.8-1.4-1.8-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.7-.3-5.5-1.3-5.5-6 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.6 18.3 5 18.3 5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5Z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+      <p class="meta">Windows 10 &amp; 11 · ~1.5 MB · free &amp; open source (MIT)</p>
+    </div>
+  </header>
+
+  <div class="showcase wrap" aria-label="Mini player preview">
+    <div class="mini">
+      <div class="mini-art" style="grid-row: span 2"></div>
+      <div class="mini-body">
+        <div class="mini-title">Heatwave (Extended Mix)</div>
+        <div class="mini-artist">DJ Dry Season</div>
+        <div class="mini-row">
+          <div class="mini-controls" aria-hidden="true">
+            <span><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></span>
+            <span class="play"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></span>
+            <span><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg></span>
+            <span class="liked"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg></span>
+          </div>
+          <span class="mini-time">2:41 / 7:05</span>
+        </div>
+      </div>
+      <div class="mini-bar"><i></i></div>
+    </div>
+  </div>
+
+  <section class="features">
+    <div class="wrap">
+      <h2>Everything a browser tab can't do</h2>
+      <p class="lead">It's the real soundcloud.com inside Windows' own Edge engine, so your login, likes, playlists and Go+ just work.</p>
+      <div class="grid">
+        <div class="card"><div class="ico">⏯</div><h3>Media keys</h3><p>Play, pause and skip from your keyboard, headset or the Windows media overlay.</p></div>
+        <div class="card"><div class="ico">◱</div><h3>Mini player</h3><p>Press <kbd>Ctrl</kbd>+<kbd>M</kbd> for a small always-on-top player with artwork, likes and a seek bar.</p></div>
+        <div class="card"><div class="ico">☀</div><h3>Lives in the tray</h3><p>Close the window and the music keeps playing. Click the icon to bring it back, middle-click to pause.</p></div>
+        <div class="card"><div class="ico">🎧</div><h3>Discord status</h3><p>Shows what you're listening to on your Discord profile, with a button to the track. You can turn it off.</p></div>
+        <div class="card"><div class="ico">⏭</div><h3>Taskbar controls</h3><p>Previous, play/pause and next right in the taskbar thumbnail.</p></div>
+        <div class="card"><div class="ico">⚡</div><h3>Slim</h3><p>About 1.5 MB, no bundled browser. It uses the WebView2 engine that ships with Windows.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq">
+    <div class="wrap">
+      <h2>FAQ</h2>
+      <p class="lead">Short answers to the obvious questions.</p>
+      <div class="faq-list">
+        <details>
+          <summary>Is this an official SoundCloud app?</summary>
+          <p>No. SoundDrought is an independent open-source project and is not affiliated with SoundCloud. It shows the regular soundcloud.com website and adds desktop features around it.</p>
+        </details>
+        <details>
+          <summary>What do I need to run it?</summary>
+          <p>Windows 10 or 11 and the free <a href="https://dotnet.microsoft.com/download/dotnet/10.0">.NET 10 Desktop Runtime</a>. WebView2 is already part of Windows.</p>
+        </details>
+        <details>
+          <summary>Can I install it with winget?</summary>
+          <p>Once the package is approved: <code>winget install Ack1.SoundDrought</code></p>
+        </details>
+        <details>
+          <summary>Is my login safe?</summary>
+          <p>You log in on soundcloud.com itself, just like in your browser. Your session is stored locally in <code>%LOCALAPPDATA%\SoundDrought</code> and never leaves your PC.</p>
+        </details>
+        <details>
+          <summary>Why the name?</summary>
+          <p>Sound, minus the cloud. A drought. ☀️</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <p>SoundDrought is free software under the <a href="https://github.com/Ack1-sysadmin/SoundDrought/blob/main/LICENSE">MIT license</a>.</p>
+      <p>Not affiliated with or endorsed by SoundCloud. “SoundCloud” is a trademark of its respective owner.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

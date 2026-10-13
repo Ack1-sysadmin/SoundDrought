@@ -39,10 +39,10 @@ public partial class MiniPlayer : Window
 
     public void Update(PlayerState state)
     {
-        TrackTitle.Text = state.HasTrack ? state.Title : "Nichts wird abgespielt";
+        TrackTitle.Text = state.HasTrack ? state.Title : L.NothingPlaying;
         TrackArtist.Text = state.Artist;
         PlayButton.Content = state.Playing ? Glyphs.Pause : Glyphs.Play;
-        PlayButton.ToolTip = state.Playing ? "Pausieren" : "Abspielen";
+        PlayButton.ToolTip = state.Playing ? L.Pause : L.Play;
         LikeButton.Content = state.Liked ? Glyphs.HeartFilled : Glyphs.Heart;
         if (state.Liked) LikeButton.Foreground = Glyphs.Accent;
         else LikeButton.ClearValue(ForegroundProperty);

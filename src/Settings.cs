@@ -24,6 +24,7 @@ public sealed class Settings
     public string? LastUrl { get; set; }
     public double? MiniLeft { get; set; }
     public double? MiniTop { get; set; }
+    public bool DiscordStatus { get; set; } = true;
 
     public static string PathFor(string name) => Path.Combine(Dir, name);
 

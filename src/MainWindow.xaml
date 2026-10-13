@@ -1,6 +1,7 @@
 <Window x:Class="SoundDrought.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:SoundDrought"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="SoundDrought" Icon="/Assets/app.ico"
         Width="1280" Height="820" MinWidth="480" MinHeight="360"
@@ -8,9 +9,9 @@
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo>
             <TaskbarItemInfo.ThumbButtonInfos>
-                <ThumbButtonInfo x:Name="ThumbPrev" Description="Zurück" Click="ThumbPrev_Click" />
-                <ThumbButtonInfo x:Name="ThumbPlay" Description="Abspielen" Click="ThumbPlay_Click" />
-                <ThumbButtonInfo x:Name="ThumbNext" Description="Weiter" Click="ThumbNext_Click" />
+                <ThumbButtonInfo x:Name="ThumbPrev" Description="{x:Static local:L.Previous}" Click="ThumbPrev_Click" />
+                <ThumbButtonInfo x:Name="ThumbPlay" Description="{x:Static local:L.Play}" Click="ThumbPlay_Click" />
+                <ThumbButtonInfo x:Name="ThumbNext" Description="{x:Static local:L.Next}" Click="ThumbNext_Click" />
             </TaskbarItemInfo.ThumbButtonInfos>
         </TaskbarItemInfo>
     </Window.TaskbarItemInfo>

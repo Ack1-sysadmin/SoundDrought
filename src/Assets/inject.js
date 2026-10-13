@@ -31,6 +31,7 @@
       artist: text(q('.playbackSoundBadge__lightLink')),
       liked: !!like?.classList.contains('sc-button-selected'),
       artwork: artwork(),
+      url: title ? title.href.split('?')[0] : '',
       position: Number(timeline?.getAttribute('aria-valuenow')) || 0,
       duration: Number(timeline?.getAttribute('aria-valuemax')) || 0,
     };

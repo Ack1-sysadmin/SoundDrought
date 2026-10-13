@@ -24,6 +24,7 @@ public partial class MainWindow : Window
 
     private readonly Settings _settings = Settings.Load();
     private readonly TrayIcon _tray;
+    private readonly DiscordPresence _discord = new();
     private readonly bool _startHidden;
     private MiniPlayer? _mini;
     private bool _miniMode;
@@ -51,6 +52,7 @@ public partial class MainWindow : Window
         ThumbPlay.ImageSource = Glyphs.Render(Glyphs.Play);
 
         _tray = new TrayIcon(this, _settings);
+        _tray.SettingsChanged += () => _discord.Update(_state, _settings.DiscordStatus);
 
         SourceInitialized += (_, _) => Native.UseDarkTitleBar(new WindowInteropHelper(this).Handle);
         Loaded += async (_, _) => await InitWebViewAsync();
@@ -109,9 +111,10 @@ public partial class MainWindow : Window
 
         Title = state.HasTrack ? $"{state.Title} – {state.Artist}" : "SoundDrought";
         ThumbPlay.ImageSource = Glyphs.Render(state.Playing ? Glyphs.Pause : Glyphs.Play);
-        ThumbPlay.Description = state.Playing ? "Pausieren" : "Abspielen";
+        ThumbPlay.Description = state.Playing ? L.Pause : L.Play;
         _tray.Update(state);
         _mini?.Update(state);
+        _discord.Update(state, _settings.DiscordStatus);
     }
 
     private void OnNewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
@@ -221,6 +224,7 @@ public partial class MainWindow : Window
         IsExiting = true;
         _mini?.Close();
         _tray.Dispose();
+        _discord.Dispose();
         Web.Dispose();
         base.OnClosed(e);
         Application.Current.Shutdown();
@@ -241,4 +245,5 @@ public sealed class PlayerState
     public string Artwork { get; set; } = "";
     public double Position { get; set; }
     public double Duration { get; set; }
+    public string Url { get; set; } = "";
 }
