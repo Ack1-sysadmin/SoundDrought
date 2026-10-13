@@ -54,9 +54,12 @@ public partial class MainWindow : Window
         _tray = new TrayIcon(this, _settings);
         _tray.SettingsChanged += () => _discord.Update(_state, _settings.DiscordStatus);
         Nav.Attach(this);
-        StateChanged += (_, _) => FitMaximizedWindow();
 
-        SourceInitialized += (_, _) => Native.UseDarkTitleBar(new WindowInteropHelper(this).Handle);
+        SourceInitialized += (_, _) =>
+        {
+            Native.UseDarkTitleBar(new WindowInteropHelper(this).Handle);
+            WindowFrame.Attach(this, captionHeight: 48); // the navigation bar is the title bar
+        };
         Loaded += async (_, _) => await InitWebViewAsync();
         PreviewKeyDown += (_, e) =>
         {
@@ -115,13 +118,6 @@ public partial class MainWindow : Window
 
     public void FocusPage() => Web.Focus();
 
-    /// <summary>A maximized chromeless window overhangs the screen by its frame; pad the content back in.</summary>
-    private void FitMaximizedWindow()
-    {
-        bool maximized = WindowState == WindowState.Maximized;
-        Root.Margin = maximized ? Native.MaximizedFrameThickness(new WindowInteropHelper(this).Handle) : new Thickness(0);
-        Web.Margin = maximized ? new Thickness(0) : new Thickness(5, 0, 5, 5);
-    }
 
     private void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {

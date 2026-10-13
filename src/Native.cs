@@ -27,13 +27,12 @@ internal static partial class Native
     [LibraryImport("user32.dll")]
     private static partial uint GetDpiForWindow(IntPtr hwnd);
 
-    /// <summary>How far a maximized window without a system frame reaches past the screen edge, in WPF units.</summary>
-    public static System.Windows.Thickness MaximizedFrameThickness(IntPtr hwnd)
+    /// <summary>Thickness of the sizing frame in physical pixels (how far a maximized window overhangs the screen).</summary>
+    public static int FrameThicknessPixels(IntPtr hwnd)
     {
         uint dpi = GetDpiForWindow(hwnd);
         if (dpi == 0) dpi = 96;
-        double frame = GetSystemMetricsForDpi(SM_CXSIZEFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
-        return new System.Windows.Thickness(frame * 96.0 / dpi);
+        return GetSystemMetricsForDpi(SM_CXSIZEFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
     }
 
     /// <summary>Rounded corners for borderless windows (Windows 11; ignored on Windows 10).</summary>
