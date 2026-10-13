@@ -4,7 +4,7 @@
         xmlns:local="clr-namespace:SoundDrought"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         Title="SoundDrought" Icon="/Assets/app.ico"
-        Width="1280" Height="820" MinWidth="480" MinHeight="360"
+        Width="1280" Height="820" MinWidth="420" MinHeight="320"
         Background="#121212">
     <Window.TaskbarItemInfo>
         <TaskbarItemInfo>
@@ -15,7 +15,17 @@
             </TaskbarItemInfo.ThumbButtonInfos>
         </TaskbarItemInfo>
     </Window.TaskbarItemInfo>
-    <Grid>
-        <wv2:WebView2 x:Name="Web" DefaultBackgroundColor="#121212" />
+    <WindowChrome.WindowChrome>
+        <!-- Our own title bar: the navigation bar doubles as caption. -->
+        <WindowChrome CaptionHeight="48" ResizeBorderThickness="6" CornerRadius="0"
+                      GlassFrameThickness="0,0,0,1" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+    <Grid x:Name="Root">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <local:NavBar x:Name="Nav" />
+        <wv2:WebView2 x:Name="Web" Grid.Row="1" DefaultBackgroundColor="#121212" />
     </Grid>
 </Window>

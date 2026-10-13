@@ -18,6 +18,24 @@ internal static partial class Native
         DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref enabled, sizeof(int));
     }
 
+    private const int SM_CXSIZEFRAME = 32;
+    private const int SM_CXPADDEDBORDER = 92;
+
+    [LibraryImport("user32.dll")]
+    private static partial int GetSystemMetricsForDpi(int index, uint dpi);
+
+    [LibraryImport("user32.dll")]
+    private static partial uint GetDpiForWindow(IntPtr hwnd);
+
+    /// <summary>How far a maximized window without a system frame reaches past the screen edge, in WPF units.</summary>
+    public static System.Windows.Thickness MaximizedFrameThickness(IntPtr hwnd)
+    {
+        uint dpi = GetDpiForWindow(hwnd);
+        if (dpi == 0) dpi = 96;
+        double frame = GetSystemMetricsForDpi(SM_CXSIZEFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+        return new System.Windows.Thickness(frame * 96.0 / dpi);
+    }
+
     /// <summary>Rounded corners for borderless windows (Windows 11; ignored on Windows 10).</summary>
     public static void UseRoundedCorners(IntPtr hwnd)
     {

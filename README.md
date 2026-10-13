@@ -12,6 +12,7 @@ SoundDrought is a small, fast desktop app for SoundCloud on Windows. It runs the
 soundcloud.com in the Edge engine (WebView2) that is already on your PC, and adds the
 things a browser tab can't do:
 
+- **Spotify-style title bar** with back/forward, search (`Ctrl+L`) and your account menu. It adapts to any window width, so you can make the window really small.
 - **Media keys and the Windows media overlay** work out of the box
 - **Tray icon**: left-click shows or hides the window, middle-click plays or pauses, right-click opens the controls
 - **Taskbar thumbnail buttons**: ⏮ ⏯ ⏭
@@ -49,6 +50,7 @@ Pushing a tag like `v0.2.0` makes GitHub Actions build the exe and attach it to 
 |---|---|
 | `src/MainWindow.xaml.cs` | Hosts WebView2, routes popups and external links, manages the views |
 | `src/Assets/inject.js` | Runs inside soundcloud.com, reports player state and clicks the player controls |
+| `src/NavBar.xaml` | The title bar that replaces SoundCloud's header |
 | `src/MiniPlayer.xaml` | The compact always-on-top player |
 | `src/TrayIcon.cs` | Tray icon and menu |
 | `src/DiscordPresence.cs` | Discord status over Discord's local IPC pipe |

@@ -32,4 +32,29 @@ public static class L
         "Click the icon to open the window, right-click for controls.");
 
     public static string ListenOnSoundCloud => T("Auf SoundCloud anhören", "Listen on SoundCloud");
+
+    // Navigation bar
+    public static string Back => T("Zurück", "Back");
+    public static string Forward => T("Vorwärts", "Forward");
+    public static string Home => T("Start", "Home");
+    public static string SearchPlaceholder => T("Was möchtest du hören?", "What do you want to listen to?");
+    public static string Feed => "Feed";
+    public static string Library => T("Bibliothek", "Library");
+    public static string Notifications => T("Benachrichtigungen", "Notifications");
+    public static string Messages => T("Nachrichten", "Messages");
+    public static string Account => T("Konto", "Account");
+    public static string Profile => T("Profil", "Profile");
+    public static string Likes => "Likes";
+    public static string Playlists => "Playlists";
+    public static string Stations => T("Sender", "Stations");
+    public static string Following => T("Folge ich", "Following");
+    public static string History => T("Verlauf", "History");
+    public static string Upload => T("Hochladen", "Upload");
+    public static string SoundCloudSettings => T("Einstellungen", "Settings");
+    public static string SignIn => T("Anmelden", "Sign in");
+    public static string SignOut => T("Abmelden", "Sign out");
+    public static string Minimize => T("Minimieren", "Minimize");
+    public static string Maximize => T("Maximieren", "Maximize");
+    public static string Restore => T("Wiederherstellen", "Restore");
+    public static string Close => T("Schließen", "Close");
 }

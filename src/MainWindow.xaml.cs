@@ -53,6 +53,8 @@ public partial class MainWindow : Window
 
         _tray = new TrayIcon(this, _settings);
         _tray.SettingsChanged += () => _discord.Update(_state, _settings.DiscordStatus);
+        Nav.Attach(this);
+        StateChanged += (_, _) => FitMaximizedWindow();
 
         SourceInitialized += (_, _) => Native.UseDarkTitleBar(new WindowInteropHelper(this).Handle);
         Loaded += async (_, _) => await InitWebViewAsync();
@@ -61,6 +63,11 @@ public partial class MainWindow : Window
             if (e.Key == Key.M && Keyboard.Modifiers == ModifierKeys.Control)
             {
                 ShowMini();
+                e.Handled = true;
+            }
+            else if (e.Key is Key.L or Key.K && Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                Nav.FocusSearch();
                 e.Handled = true;
             }
         };
@@ -75,6 +82,9 @@ public partial class MainWindow : Window
         {
             AdditionalBrowserArguments = "--disable-background-timer-throttling --disable-renderer-backgrounding",
         };
+#if DEBUG
+        options.AdditionalBrowserArguments += " --remote-debugging-port=9222";
+#endif
         var env = await CoreWebView2Environment.CreateAsync(null, Settings.PathFor("WebView2"), options);
         await Web.EnsureCoreWebView2Async(env);
 
@@ -103,6 +113,16 @@ public partial class MainWindow : Window
 
     public void Send(string command) => Web.CoreWebView2?.PostWebMessageAsString(command);
 
+    public void FocusPage() => Web.Focus();
+
+    /// <summary>A maximized chromeless window overhangs the screen by its frame; pad the content back in.</summary>
+    private void FitMaximizedWindow()
+    {
+        Root.Margin = WindowState == WindowState.Maximized
+            ? Native.MaximizedFrameThickness(new WindowInteropHelper(this).Handle)
+            : new Thickness(0);
+    }
+
     private void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {
         var state = JsonSerializer.Deserialize<PlayerState>(e.WebMessageAsJson, JsonOptions);
@@ -114,6 +134,7 @@ public partial class MainWindow : Window
         ThumbPlay.Description = state.Playing ? L.Pause : L.Play;
         _tray.Update(state);
         _mini?.Update(state);
+        Nav.Update(state);
         _discord.Update(state, _settings.DiscordStatus);
     }
 
@@ -247,4 +268,12 @@ public sealed class PlayerState
     public double Duration { get; set; }
     public string Url { get; set; } = "";
     public string ArtistUrl { get; set; } = "";
+    public bool LoggedIn { get; set; }
+    public string UserUrl { get; set; } = "";
+    public string Avatar { get; set; } = "";
+    public bool NewNotifications { get; set; }
+    public bool NewMessages { get; set; }
+    public string Path { get; set; } = "";
+    public bool CanGoBack { get; set; }
+    public bool CanGoForward { get; set; }
 }
