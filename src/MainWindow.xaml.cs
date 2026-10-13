@@ -246,4 +246,5 @@ public sealed class PlayerState
     public double Position { get; set; }
     public double Duration { get; set; }
     public string Url { get; set; } = "";
+    public string ArtistUrl { get; set; } = "";
 }

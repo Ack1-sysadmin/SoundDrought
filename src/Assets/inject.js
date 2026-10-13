@@ -21,6 +21,7 @@
 
   function readState() {
     const title = q('.playbackSoundBadge__titleLink');
+    const artist = q('.playbackSoundBadge__lightLink');
     const like = q('.playbackSoundBadge__like');
     const timeline = q('.playbackTimeline__progressWrapper');
     return {
@@ -28,10 +29,11 @@
       hasTrack: !!title,
       playing: !!q('.playControls__play.playing'),
       title: text(title?.querySelector('span[aria-hidden]') ?? title),
-      artist: text(q('.playbackSoundBadge__lightLink')),
+      artist: text(artist),
       liked: !!like?.classList.contains('sc-button-selected'),
       artwork: artwork(),
       url: title ? title.href.split('?')[0] : '',
+      artistUrl: artist ? artist.href.split('?')[0] : '',
       position: Number(timeline?.getAttribute('aria-valuenow')) || 0,
       duration: Number(timeline?.getAttribute('aria-valuemax')) || 0,
     };
