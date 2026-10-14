@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <RootNamespace>SoundDrought</RootNamespace>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- Single-file release: dotnet publish -c Release -r win-x64 -->
     <PublishSingleFile>true</PublishSingleFile>
