@@ -6,8 +6,14 @@ namespace SoundDrought;
 
 public partial class App : Application
 {
-    private const string MutexName = "SoundDrought.SingleInstance";
-    private const string ShowEventName = "SoundDrought.Show";
+    // Debug builds get their own instance and data folder, so they can run next to the installed app.
+#if DEBUG
+    public const string InstanceName = "SoundDrought.Debug";
+#else
+    public const string InstanceName = "SoundDrought";
+#endif
+    private const string MutexName = InstanceName + ".SingleInstance";
+    private const string ShowEventName = InstanceName + ".Show";
 
     private Mutex? _mutex;
     private EventWaitHandle? _showEvent;

@@ -95,7 +95,8 @@
     const bar = q('.playbackTimeline__progressWrapper');
     if (!bar) return;
     const r = bar.getBoundingClientRect();
-    const init = { bubbles: true, button: 0, clientX: r.left + r.width * fraction, clientY: r.top + r.height / 2 };
+    // iew makes the browser fill in pageX/pageY (which include the scroll offset) like for real clicks.
+    const init = { view: window, bubbles: true, button: 0, clientX: r.left + r.width * fraction, clientY: r.top + r.height / 2 };
     for (const type of ['mousedown', 'mouseup', 'click']) bar.dispatchEvent(new MouseEvent(type, init));
   }
 
@@ -107,7 +108,8 @@
     const target = Math.min(1, Math.max(0, value));
     const click = v => {
       // The slider measures from its handle's center, ~3% of the track below the click point.
-      const init = { bubbles: true, button: 0, buttons: 1, clientX: track.left + track.width / 2,
+      // Without iew, pageY would ignore the scroll offset and SoundCloud would read every click as 100%.
+      const init = { view: window, bubbles: true, button: 0, buttons: 1, clientX: track.left + track.width / 2,
                      clientY: track.bottom - track.height * v + track.height * 0.03 };
       slider.dispatchEvent(new MouseEvent('mousedown', init));
       document.dispatchEvent(new MouseEvent('mouseup', init));

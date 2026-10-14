@@ -8,7 +8,7 @@ namespace SoundDrought;
 public sealed class Settings
 {
     private static readonly string Dir =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SoundDrought");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), App.InstanceName);
 
     private static readonly string FilePath = Path.Combine(Dir, "settings.json");
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
