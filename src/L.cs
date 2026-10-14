@@ -31,6 +31,10 @@ public static class L
         "Klick aufs Symbol öffnet das Fenster, Rechtsklick zeigt die Steuerung.",
         "Click the icon to open the window, right-click for controls.");
 
+    public static string Volume => T("Lautstärke", "Volume");
+    public static string Mute => T("Stummschalten", "Mute");
+    public static string Unmute => T("Ton an", "Unmute");
+
     public static string ListenOnSoundCloud => T("Auf SoundCloud anhören", "Listen on SoundCloud");
 
     // Navigation bar

@@ -272,4 +272,6 @@ public sealed class PlayerState
     public string Path { get; set; } = "";
     public bool CanGoBack { get; set; }
     public bool CanGoForward { get; set; }
+    public double Volume { get; set; }
+    public bool Muted { get; set; }
 }

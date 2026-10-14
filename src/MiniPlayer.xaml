@@ -43,6 +43,58 @@
             <Setter Property="Height" Value="24" />
             <Setter Property="Foreground" Value="#909090" />
         </Style>
+        <!-- Thin volume slider: click anywhere to jump, drag the thumb (shown on hover) -->
+        <Style x:Key="VolumeTrackPart" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Grid Background="Transparent">
+                            <Border Height="4" CornerRadius="2" Background="{TemplateBinding Background}" VerticalAlignment="Center" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="VolumeSlider" TargetType="Slider">
+            <Setter Property="Minimum" Value="0" />
+            <Setter Property="Maximum" Value="1" />
+            <Setter Property="SmallChange" Value="0.05" />
+            <Setter Property="LargeChange" Value="0.1" />
+            <Setter Property="IsMoveToPointEnabled" Value="True" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Track x:Name="PART_Track">
+                            <Track.DecreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource VolumeTrackPart}" Background="#E8E8E8" Command="Slider.DecreaseLarge" />
+                            </Track.DecreaseRepeatButton>
+                            <Track.IncreaseRepeatButton>
+                                <RepeatButton Style="{StaticResource VolumeTrackPart}" Background="#3A3A3A" Command="Slider.IncreaseLarge" />
+                            </Track.IncreaseRepeatButton>
+                            <Track.Thumb>
+                                <Thumb x:Name="Knob" Width="10" Height="10" Opacity="0">
+                                    <Thumb.Template>
+                                        <ControlTemplate TargetType="Thumb">
+                                            <Ellipse Fill="White" />
+                                        </ControlTemplate>
+                                    </Thumb.Template>
+                                </Thumb>
+                            </Track.Thumb>
+                        </Track>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Knob" Property="Opacity" Value="1" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -85,8 +137,15 @@
                 <Button Style="{StaticResource SmallIconButton}" Content="&#xE8BB;" ToolTip="{x:Static local:L.HideToTray}" AutomationProperties.Name="{x:Static local:L.HideToTray}" Click="OnHide" />
             </StackPanel>
 
-            <TextBlock x:Name="TrackArtist" Grid.Row="1" Grid.ColumnSpan="2" FontSize="12" Foreground="#A0A0A0"
-                       TextTrimming="CharacterEllipsis" Margin="0,1,0,0" />
+            <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,1,6,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TrackArtist" FontSize="12" Foreground="#A0A0A0" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="Time" Grid.Column="1" FontSize="11" Foreground="#808080" Margin="8,0,0,0"
+                           VerticalAlignment="Center" />
+            </Grid>
 
             <Grid Grid.Row="2" Grid.ColumnSpan="2" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="-8,0,0,0">
@@ -95,8 +154,14 @@
                     <Button Style="{StaticResource IconButton}" Content="&#xE893;" ToolTip="{x:Static local:L.Next}" AutomationProperties.Name="{x:Static local:L.Next}" Click="OnNext" />
                     <Button x:Name="LikeButton" Style="{StaticResource IconButton}" Content="&#xEB51;" ToolTip="{x:Static local:L.Like}" AutomationProperties.Name="{x:Static local:L.Like}" Click="OnLike" />
                 </StackPanel>
-                <TextBlock x:Name="Time" HorizontalAlignment="Right" VerticalAlignment="Center"
-                           FontSize="11" Foreground="#808080" Margin="0,0,6,0" />
+                <!-- Volume: speaker toggles mute, bar is click/drag; the wheel works anywhere on the window -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0">
+                    <Button x:Name="MuteButton" Style="{StaticResource IconButton}" Content="&#xE995;" FontSize="14" Width="30"
+                            ToolTip="{x:Static local:L.Mute}" AutomationProperties.Name="{x:Static local:L.Mute}" Click="OnMute" />
+                    <Slider x:Name="VolumeSlider" Style="{StaticResource VolumeSlider}" Width="68" Margin="2,0,0,0"
+                            AutomationProperties.Name="{x:Static local:L.Volume}"
+                            ValueChanged="OnVolumeChanged" Thumb.DragCompleted="OnVolumeDragCompleted" />
+                </StackPanel>
             </Grid>
         </Grid>
 

@@ -44,7 +44,10 @@
     next: '.skipControl__next',
     prev: '.skipControl__previous',
     like: '.playbackSoundBadge__like',
+    mute: '.volume__speakerIcon',
   };
+
+  const volume = () => Number(q('.volume__sliderWrapper')?.getAttribute('aria-valuenow')) || 0;
 
   function readState() {
     const title = q('.playbackSoundBadge__titleLink');
@@ -72,6 +75,8 @@
       path: location.pathname,
       canGoBack: !!window.navigation?.canGoBack,
       canGoForward: !!window.navigation?.canGoForward,
+      volume: volume(),
+      muted: !!q('.volume.muted'),
     };
   }
 
@@ -93,6 +98,63 @@
     const init = { bubbles: true, button: 0, clientX: r.left + r.width * fraction, clientY: r.top + r.height / 2 };
     for (const type of ['mousedown', 'mouseup', 'click']) bar.dispatchEvent(new MouseEvent(type, init));
   }
+
+  // Drives SoundCloud's own (hidden) volume slider, so its UI and saved setting stay in sync.
+  function setVolume(value) {
+    const slider = q('.volume__sliderWrapper');
+    const track = q('.volume__sliderBackground')?.getBoundingClientRect();
+    if (!slider || !track?.height) return;
+    const target = Math.min(1, Math.max(0, value));
+    const click = v => {
+      // The slider measures from its handle's center, ~3% of the track below the click point.
+      const init = { bubbles: true, button: 0, buttons: 1, clientX: track.left + track.width / 2,
+                     clientY: track.bottom - track.height * v + track.height * 0.03 };
+      slider.dispatchEvent(new MouseEvent('mousedown', init));
+      document.dispatchEvent(new MouseEvent('mouseup', init));
+    };
+    // The track is only ~120px tall, so a click can land a pixel off; correct until it's exact.
+    let aim = target;
+    for (let i = 0; i < 3; i++) {
+      click(aim);
+      const error = target - volume();
+      if (Math.abs(error) < 0.006) break;
+      aim += error;
+    }
+  }
+
+  // Steps land on a clean 5% grid (35, 40, 45 …) instead of drifting.
+  const stepVolume = step => setVolume(Math.round((volume() + step) * 20) / 20);
+
+  // Small "42 %" bubble above the speaker icon while the wheel changes the volume.
+  let bubble, bubbleTimer;
+  function showVolume() {
+    const anchor = q('.playControls__volume')?.getBoundingClientRect();
+    if (!anchor) return;
+    if (!bubble) {
+      bubble = document.createElement('div');
+      bubble.style.cssText = 'position:fixed;z-index:100000;padding:4px 10px;border-radius:12px;background:#f2f2f2;' +
+        'color:#121212;font:600 12px/1.4 system-ui,sans-serif;pointer-events:none;transition:opacity .2s;transform:translateX(-50%)';
+      document.body.appendChild(bubble);
+    }
+    bubble.textContent = q('.volume.muted') ? '🔇' : `${Math.round(volume() * 100)} %`;
+    bubble.style.left = `${anchor.left + anchor.width / 2}px`;
+    bubble.style.top = `${anchor.top - 30}px`;
+    bubble.style.opacity = '1';
+    clearTimeout(bubbleTimer);
+    bubbleTimer = setTimeout(() => (bubble.style.opacity = '0'), 900);
+  }
+
+  // Mouse wheel over the player bar changes the volume in 5% steps.
+  let wheel = 0;
+  document.addEventListener('wheel', e => {
+    if (!(e.target instanceof Element) || !e.target.closest('.playControls')) return;
+    e.preventDefault();
+    wheel += e.deltaY;
+    if (Math.abs(wheel) < 40) return; // touchpads send many small deltas
+    stepVolume(wheel < 0 ? 0.05 : -0.05);
+    wheel = 0;
+    setTimeout(() => { showVolume(); report(); }, 30);
+  }, { passive: false, capture: true });
 
   // SoundCloud routes link clicks itself, so clicking a temporary link navigates without a reload
   // and the music keeps playing.
@@ -116,6 +178,8 @@
     const cmd = String(e.data);
     if (cmd.startsWith('seek:')) seek(Math.min(1, Math.max(0, Number(cmd.slice(5)))));
     else if (cmd.startsWith('nav:')) navigate(cmd.slice(4));
+    else if (cmd.startsWith('volume:')) setVolume(Number(cmd.slice(7)));
+    else if (cmd.startsWith('volumeBy:')) stepVolume(Number(cmd.slice(9)));
     else if (cmd === 'signin') signIn();
     else if (cmd === 'back') history.back();
     else if (cmd === 'forward') history.forward();

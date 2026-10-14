@@ -16,7 +16,8 @@ things a browser tab can't do:
 - **Media keys and the Windows media overlay** work out of the box
 - **Tray icon**: left-click shows or hides the window, middle-click plays or pauses, right-click opens the controls
 - **Taskbar thumbnail buttons**: ⏮ ⏯ ⏭
-- **Mini player** (`Ctrl+M`): always on top, with artwork, like button and a seek bar
+- **Mini player** (`Ctrl+M`): always on top, with artwork, like button, volume and a seek bar
+- **Volume with the mouse wheel**: anywhere over the mini player, or over the player bar in the main window
 - **Keeps playing in the tray** when you close the window
 - **Discord status**: "Listening to …" with the track, artwork and a link to it (can be turned off in the tray menu)
 - **Start with Windows**, straight to the tray
