@@ -26,13 +26,38 @@ jobs:
           dotnet publish src -c Release -r win-x64 -o out -p:Version=$version
 
       - uses: actions/upload-artifact@v6
+        id: upload
         with:
           name: app-win-x64
           path: out/*.exe
+
+      # Code signing via the SignPath Foundation. Stays off until the repository variable
+      # SIGNPATH_ORGANIZATION_ID and the secret SIGNPATH_API_TOKEN are set (after approval).
+      # Every request still has to be approved by hand in SignPath.
+      - name: Sign with SignPath
+        id: sign
+        if: github.ref_type == 'tag' && vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: SoundDrought
+          signing-policy-slug: release-signing
+          artifact-configuration-slug: default
+          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Use the signed exe
+        if: steps.sign.outcome == 'success'
+        shell: pwsh
+        run: Copy-Item signed/*.exe out/ -Force
 
       - name: Release
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           files: out/*.exe
+          body: |
+            **Code signing policy:** https://ack1-sysadmin.github.io/SoundDrought/code-signing.html
           generate_release_notes: true

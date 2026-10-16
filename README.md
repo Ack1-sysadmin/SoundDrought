@@ -62,6 +62,31 @@ Pushing a tag like `v0.2.0` makes GitHub Actions build the exe and attach it to 
 
 App data, including the WebView2 profile, lives in `%LOCALAPPDATA%\SoundDrought`.
 
+## Uninstall
+
+1. Turn off "Start with Windows" in the tray menu (if you turned it on), then choose "Exit".
+2. Delete `SoundDrought.exe`, or run `winget uninstall Ack1.SoundDrought` if you installed it with winget.
+3. Delete `%LOCALAPPDATA%\SoundDrought` to remove your settings and sign-in.
+
+## Privacy
+
+SoundDrought has no servers, analytics or telemetry. It connects to soundcloud.com (the website you use),
+to the sign-in provider you pick there, and, if Discord is running, tells your local Discord app which
+track is playing (you can turn that off in the tray menu). Details: [privacy policy](https://ack1-sysadmin.github.io/SoundDrought/privacy.html).
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+Signing starts once the project has been approved; releases up to v0.3.3 are unsigned.
+Releases are built only by GitHub Actions from tagged commits, and every signing request is approved by hand.
+
+| Role | Members |
+|---|---|
+| Committers and reviewers | [Ack1-sysadmin](https://github.com/Ack1-sysadmin) |
+| Approvers | [Ack1-sysadmin](https://github.com/Ack1-sysadmin) |
+
+Full policy: [Code signing policy](https://ack1-sysadmin.github.io/SoundDrought/code-signing.html)
+
 ## License
 
 [MIT](LICENSE)

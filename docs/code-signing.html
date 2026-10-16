@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Code signing policy – SoundDrought</title>
+  <meta name="description" content="How SoundDrought releases are built and signed.">
+  <link rel="icon" href="icon.png">
+  <link rel="stylesheet" href="page.css">
+</head>
+<body>
+<main>
+  <header><img src="icon.png" alt=""><a href="./">SoundDrought</a></header>
+
+  <h1>Code signing policy</h1>
+
+  <p class="note">
+    Free code signing provided by <a href="https://signpath.io">SignPath.io</a>,
+    certificate by <a href="https://signpath.org">SignPath Foundation</a>.
+  </p>
+  <p>
+    Signing starts as soon as the SignPath Foundation has approved the project. Releases up to and
+    including v0.3.3 are not signed.
+  </p>
+
+  <h2>What gets signed</h2>
+  <p>
+    Only <code>SoundDrought.exe</code>, built from the source code in
+    <a href="https://github.com/Ack1-sysadmin/SoundDrought">github.com/Ack1-sysadmin/SoundDrought</a>.
+    Every release is built by <a href="https://github.com/Ack1-sysadmin/SoundDrought/actions">GitHub Actions</a>
+    from a tagged commit. No binary is ever built or signed on a personal machine. Each signing request
+    is approved by hand.
+  </p>
+
+  <h2>Team roles</h2>
+  <table>
+    <tr><th>Role</th><th>Members</th></tr>
+    <tr><td>Committers and reviewers</td><td><a href="https://github.com/Ack1-sysadmin">Ack1-sysadmin</a></td></tr>
+    <tr><td>Approvers</td><td><a href="https://github.com/Ack1-sysadmin">Ack1-sysadmin</a></td></tr>
+  </table>
+  <p>
+    Changes from other contributors arrive as pull requests and are reviewed before they are merged.
+    All team members use multi-factor authentication for GitHub and SignPath.
+  </p>
+
+  <h2>Privacy policy</h2>
+  <p>
+    This program will not transfer any information to other networked systems unless specifically
+    requested by the user or the person installing or operating it. See the
+    <a href="privacy.html">privacy policy</a> for what the app connects to and why.
+  </p>
+
+  <footer>
+    <a href="./">Home</a> · <a href="privacy.html">Privacy</a> ·
+    <a href="https://github.com/Ack1-sysadmin/SoundDrought/releases">Releases</a>
+  </footer>
+</main>
+</body>
+</html>

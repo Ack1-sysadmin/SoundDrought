@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy – SoundDrought</title>
+  <meta name="description" content="What SoundDrought stores and connects to.">
+  <link rel="icon" href="icon.png">
+  <link rel="stylesheet" href="page.css">
+</head>
+<body>
+<main>
+  <header><img src="icon.png" alt=""><a href="./">SoundDrought</a></header>
+
+  <h1>Privacy policy</h1>
+  <p>
+    SoundDrought has no servers, accounts, analytics or telemetry. The project itself never receives
+    any data about you or how you use the app.
+  </p>
+  <p class="note">
+    This program will not transfer any information to other networked systems unless specifically
+    requested by the user or the person installing or operating it.
+  </p>
+
+  <h2>What the app connects to</h2>
+  <table>
+    <tr><th>Connection</th><th>Why</th><th>Their privacy policy</th></tr>
+    <tr>
+      <td><b>soundcloud.com</b></td>
+      <td>SoundDrought shows the regular SoundCloud website. You sign in and listen there, just like in your browser.</td>
+      <td><a href="https://soundcloud.com/pages/privacy">SoundCloud</a></td>
+    </tr>
+    <tr>
+      <td><b>Sign-in providers</b> (Google, Apple, Facebook)</td>
+      <td>Only if you choose one of them on SoundCloud's sign-in page.</td>
+      <td><a href="https://policies.google.com/privacy">Google</a> ·
+          <a href="https://www.apple.com/legal/privacy/">Apple</a> ·
+          <a href="https://www.facebook.com/privacy/policy/">Meta</a></td>
+    </tr>
+    <tr>
+      <td><b>Discord app on your PC</b></td>
+      <td>If Discord is running, SoundDrought tells it which track is playing (title, artist, artwork link, track link) so it can show "Listening to …" on your profile. You can turn this off in the tray menu ("Show Discord status").</td>
+      <td><a href="https://discord.com/privacy">Discord</a></td>
+    </tr>
+    <tr>
+      <td><b>Microsoft Edge WebView2</b></td>
+      <td>The browser engine built into Windows that displays SoundCloud. It is part of Windows and follows Microsoft's settings for Edge.</td>
+      <td><a href="https://www.microsoft.com/privacy/privacystatement">Microsoft</a></td>
+    </tr>
+  </table>
+  <p>Links you open that lead away from SoundCloud open in your normal browser.</p>
+
+  <h2>What is stored on your PC</h2>
+  <ul>
+    <li><code>%LOCALAPPDATA%\SoundDrought</code>: window position, zoom, the last page and your settings, plus the
+        WebView2 profile (SoundCloud cookies and sign-in) and a small diagnostic log (<code>app.log</code>).</li>
+    <li>If you turn on "Start with Windows", an entry named <code>SoundDrought</code> under
+        <code>HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run</code>. It is removed when you turn the option off.</li>
+  </ul>
+
+  <h2>Uninstall</h2>
+  <ol>
+    <li>Turn off "Start with Windows" in the tray menu (if you turned it on), then choose "Exit".</li>
+    <li>Delete <code>SoundDrought.exe</code>. If you installed it with winget: <code>winget uninstall Ack1.SoundDrought</code>.</li>
+    <li>Delete the folder <code>%LOCALAPPDATA%\SoundDrought</code> to remove your settings and sign-in.</li>
+  </ol>
+
+  <footer>
+    <a href="./">Home</a> · <a href="code-signing.html">Code signing policy</a> ·
+    <a href="https://github.com/Ack1-sysadmin/SoundDrought">Source code</a>
+  </footer>
+</main>
+</body>
+</html>

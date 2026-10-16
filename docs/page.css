@@ -1,0 +1,38 @@
+/* Shared style for the text pages (code signing policy, privacy). Matches index.html. */
+:root {
+  --bg: #120d0a;
+  --bg-2: #1b1410;
+  --line: #3a2b20;
+  --text: #f6efe9;
+  --muted: #b9a89a;
+  --sun-1: #ffb020;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.65 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+main { max-width: 760px; margin: 0 auto; padding: 48px 20px 64px; }
+header { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+header img { width: 40px; height: 40px; }
+header a { color: var(--text); text-decoration: none; font-weight: 600; font-size: 18px; }
+h1 { font-size: clamp(28px, 5vw, 38px); line-height: 1.15; margin: 0 0 8px; letter-spacing: -.01em; }
+h2 { font-size: 21px; margin: 36px 0 8px; }
+p, li { color: var(--muted); }
+strong, b { color: var(--text); }
+a { color: var(--sun-1); }
+ul { padding-left: 20px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--text); font-weight: 600; }
+td { color: var(--muted); }
+.note {
+  border: 1px solid var(--line); background: var(--bg-2); border-radius: 12px;
+  padding: 14px 18px; margin: 16px 0; color: var(--text);
+}
+code { font: 14px ui-monospace, "Cascadia Mono", Consolas, monospace; background: #2a1f17; padding: 2px 6px; border-radius: 6px; color: var(--text); }
+footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+footer a { color: var(--text); }
