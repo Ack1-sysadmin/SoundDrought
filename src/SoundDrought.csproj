@@ -11,6 +11,14 @@
     <RootNamespace>SoundDrought</RootNamespace>
     <Version>0.3.2</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- File properties shown by Windows and read by virus scanners -->
+    <Company>Ack1</Company>
+    <Product>SoundDrought</Product>
+    <AssemblyTitle>SoundDrought – desktop app for SoundCloud</AssemblyTitle>
+    <Description>A slim desktop app for SoundCloud on Windows.</Description>
+    <Copyright>© 2026 Ack1 · MIT License</Copyright>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <!-- Single-file release: dotnet publish -c Release -r win-x64 -->
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
