@@ -45,6 +45,18 @@ public partial class App : Application
         listener.Start();
     }
 
+    /// <summary>
+    /// Windows is shutting down or signing out: agree and quit right away instead of waiting for the
+    /// final signal. The embedded WebView2 lives in other processes that shut down at the same time and
+    /// can stall our window long enough for Windows to list the app as "preventing shutdown".
+    /// </summary>
+    protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
+    {
+        base.OnSessionEnding(e);
+        if (!e.Cancel && MainWindow is MainWindow window)
+            Dispatcher.BeginInvoke(window.Exit); // after answering Windows, so the answer is instant
+    }
+
     protected override void OnExit(ExitEventArgs e)
     {
         _mutex?.Dispose();
