@@ -61,4 +61,36 @@ public static class L
     public static string Maximize => T("Maximieren", "Maximize");
     public static string Restore => T("Wiederherstellen", "Restore");
     public static string Close => T("Schließen", "Close");
+
+    // Updates
+    public static string CheckForUpdates => T("Nach Updates suchen", "Check for updates");
+    public static string UpdateAvailable(string version) => T($"Update auf {version} verfügbar – herunterladen", $"Update to {version} available – download");
+    public static string UpdateBalloonTitle(string version) => T($"SoundDrought {version} ist da", $"SoundDrought {version} is available");
+    public static string UpdateBalloonText => T("Klick hier, um die neue Version herunterzuladen.", "Click here to download the new version.");
+
+    // Sleep timer
+    public static string SleepTimer => T("Sleep-Timer", "Sleep timer");
+    public static string SleepOff => T("Aus", "Off");
+    public static string SleepMinutes(int minutes) => T($"{minutes} Minuten", $"{minutes} minutes");
+    public static string SleepAfterTrack => T("Nach diesem Track", "After this track");
+    public static string SleepRemaining(int minutes) => T($"Sleep-Timer: noch {minutes} min", $"Sleep timer: {minutes} min left");
+    public static string SleepAfterTrackActive => T("Sleep-Timer: nach diesem Track", "Sleep timer: after this track");
+
+    // Equalizer and page tweaks
+    public static string Equalizer => "Equalizer";
+    public static string EqualizerOn => T("Equalizer aktiv", "Equalizer on");
+    public static string Normalize => T("Lautstärke angleichen", "Level loudness");
+    public static string NormalizeHint => T("Gleicht laute und leise Tracks an (Kompressor).", "Evens out loud and quiet tracks (compressor).");
+    public static string Presets => T("Voreinstellungen", "Presets");
+    public static string HideUpsells => T("Werbebanner ausblenden", "Hide promo banners");
+    public static string Unlike => T("Gefällt mir nicht mehr", "Unlike");
+
+    // Mini player variants
+    public static string MiniLayoutCompact => T("Kompakt", "Compact");
+    public static string MiniLayoutCover => T("Nur Cover", "Cover only");
+    public static string MiniSizeSmall => T("Klein", "Small");
+    public static string MiniSizeMedium => T("Mittel", "Medium");
+    public static string MiniSizeLarge => T("Groß", "Large");
+    public static string MiniOpacity(int percent) => T($"Deckkraft {percent} %", $"Opacity {percent}%");
+    public static string AlwaysOnTop => T("Immer im Vordergrund", "Always on top");
 }

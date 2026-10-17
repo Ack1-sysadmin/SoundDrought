@@ -5,6 +5,16 @@ using System.Windows;
 
 namespace SoundDrought;
 
+/// <summary>Equalizer and loudness levelling, sent to the page script as JSON.</summary>
+public sealed class AudioSettings
+{
+    public static readonly int[] Frequencies = [60, 230, 910, 3600, 14000];
+
+    public bool Enabled { get; set; }
+    public double[] Bands { get; set; } = new double[5];
+    public bool Normalize { get; set; }
+}
+
 public sealed class Settings
 {
     private static readonly string Dir =
@@ -25,7 +35,20 @@ public sealed class Settings
     public double? MiniLeft { get; set; }
     public double? MiniTop { get; set; }
     public bool DiscordStatus { get; set; } = true;
+    public bool CheckForUpdates { get; set; } = true;
+    public string? NotifiedUpdate { get; set; }
+    public bool HideUpsells { get; set; } = true;
+    public AudioSettings Audio { get; set; } = new();
 
+    // Resume: the last track and where it was, restored on the next start.
+    public string? ResumeUrl { get; set; }
+    public double ResumePosition { get; set; }
+
+    // Mini player variants
+    public bool MiniCover { get; set; }
+    public double MiniScale { get; set; } = 1.0;
+    public double MiniOpacity { get; set; } = 1.0;
+    public bool MiniTopmost { get; set; } = true;
     public static string PathFor(string name) => Path.Combine(Dir, name);
 
     public static Settings Load()

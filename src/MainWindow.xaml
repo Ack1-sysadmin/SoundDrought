@@ -12,6 +12,7 @@
                 <ThumbButtonInfo x:Name="ThumbPrev" Description="{x:Static local:L.Previous}" Click="ThumbPrev_Click" />
                 <ThumbButtonInfo x:Name="ThumbPlay" Description="{x:Static local:L.Play}" Click="ThumbPlay_Click" />
                 <ThumbButtonInfo x:Name="ThumbNext" Description="{x:Static local:L.Next}" Click="ThumbNext_Click" />
+                <ThumbButtonInfo x:Name="ThumbLike" Description="{x:Static local:L.Like}" Click="ThumbLike_Click" />
             </TaskbarItemInfo.ThumbButtonInfos>
         </TaskbarItemInfo>
     </Window.TaskbarItemInfo>

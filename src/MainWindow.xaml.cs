@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Shell;
+using System.Windows.Threading;
 using Microsoft.Web.WebView2.Core;
 
 namespace SoundDrought;
@@ -27,8 +29,12 @@ public partial class MainWindow : Window
     private readonly DiscordPresence _discord = new();
     private readonly bool _startHidden;
     private MiniPlayer? _mini;
+    private EqualizerWindow? _equalizer;
     private bool _miniMode;
     private PlayerState _state = new();
+    private bool _resumeChecked;
+    private DateTime _resumeSaved;
+    private string? _pendingNav;
 
     public MainWindow(bool startHidden)
     {
@@ -50,9 +56,15 @@ public partial class MainWindow : Window
         ThumbPrev.ImageSource = Glyphs.Render(Glyphs.Previous);
         ThumbNext.ImageSource = Glyphs.Render(Glyphs.Next);
         ThumbPlay.ImageSource = Glyphs.Render(Glyphs.Play);
+        ThumbLike.ImageSource = Glyphs.Render(Glyphs.Heart);
 
+        Sleep = new SleepTimer(() => Send("pause"), () => _tray?.RefreshTooltip());
         _tray = new TrayIcon(this, _settings);
-        _tray.SettingsChanged += () => _discord.Update(_state, _settings.DiscordStatus);
+        _tray.SettingsChanged += () =>
+        {
+            _discord.Update(_state, _settings.DiscordStatus);
+            SendPageSettings();
+        };
         Nav.Attach(this);
 
         SourceInitialized += (_, _) =>
@@ -60,7 +72,11 @@ public partial class MainWindow : Window
             Native.UseDarkTitleBar(new WindowInteropHelper(this).Handle);
             WindowFrame.Attach(this, captionHeight: 48); // the navigation bar is the title bar
         };
-        Loaded += async (_, _) => await InitWebViewAsync();
+        Loaded += async (_, _) =>
+        {
+            await InitWebViewAsync();
+            StartUpdateChecks();
+        };
         PreviewKeyDown += (_, e) =>
         {
             if (e.Key == Key.M && Keyboard.Modifiers == ModifierKeys.Control)
@@ -77,6 +93,8 @@ public partial class MainWindow : Window
     }
 
     public bool IsExiting { get; private set; }
+
+    public SleepTimer Sleep { get; }
 
     private async Task InitWebViewAsync()
     {
@@ -99,6 +117,12 @@ public partial class MainWindow : Window
         await core.AddScriptToExecuteOnDocumentCreatedAsync(LoadResource("inject.js"));
         core.WebMessageReceived += OnWebMessage;
         core.NewWindowRequested += OnNewWindowRequested;
+        core.DOMContentLoaded += (_, _) =>
+        {
+            SendPageSettings();
+            if (_pendingNav != null) Send("nav:" + _pendingNav);
+            _pendingNav = null;
+        };
 
         Web.ZoomFactor = _settings.Zoom;
         Web.ZoomFactorChanged += (_, _) => _settings.Zoom = Web.ZoomFactor;
@@ -118,6 +142,69 @@ public partial class MainWindow : Window
 
     public void FocusPage() => Web.Focus();
 
+    /// <summary>Equalizer and banner settings live in the page script; send them after every page load.</summary>
+    public void SendPageSettings()
+    {
+        Send("upsell:" + (_settings.HideUpsells ? "hide" : "show"));
+        Send("eq:" + JsonSerializer.Serialize(_settings.Audio, JsonOptions));
+    }
+
+    public void ApplyAudio(AudioSettings audio)
+    {
+        _settings.Audio = audio;
+        _settings.Save();
+        Send("eq:" + JsonSerializer.Serialize(audio, JsonOptions));
+    }
+
+    public void ShowEqualizer()
+    {
+        if (_equalizer is null)
+        {
+            _equalizer = new EqualizerWindow(this, _settings.Audio);
+            _equalizer.Closed += (_, _) => _equalizer = null;
+        }
+        _equalizer.Show();
+        _equalizer.Activate();
+    }
+
+    /// <summary>Command line from the jump list or a second start: --nav=/path or --mini.</summary>
+    public void HandleArgs(string[] args)
+    {
+        string? nav = null;
+        bool mini = false;
+        foreach (var arg in args)
+        {
+            if (arg.StartsWith("--nav=", StringComparison.Ordinal)) nav = arg[6..];
+            else if (arg == "--mini") mini = true;
+        }
+
+        if (mini) ShowMini();
+        else Restore();
+
+        // Only SoundCloud paths like /you/likes, never other sites.
+        if (nav is { Length: > 1 } && nav[0] == '/' && nav[1] != '/')
+        {
+            if (!mini) ShowMain();
+            if (Web.CoreWebView2 is null) _pendingNav = nav;
+            else Send("nav:" + nav);
+        }
+    }
+
+    private void StartUpdateChecks()
+    {
+        if (Native.IsPackaged) return; // the Store updates the app
+
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(20) };
+        timer.Tick += async (_, _) =>
+        {
+            timer.Interval = TimeSpan.FromHours(12);
+            if (!_settings.CheckForUpdates) return;
+            if (await UpdateChecker.FindNewerAsync() is { } release)
+                _tray.ShowUpdate(release);
+        };
+        timer.Start();
+    }
+
 
     private void OnWebMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {
@@ -128,10 +215,51 @@ public partial class MainWindow : Window
         Title = state.HasTrack ? $"{state.Title} – {state.Artist}" : "SoundDrought";
         ThumbPlay.ImageSource = Glyphs.Render(state.Playing ? Glyphs.Pause : Glyphs.Play);
         ThumbPlay.Description = state.Playing ? L.Pause : L.Play;
+        ThumbLike.ImageSource = Glyphs.Render(state.Liked ? Glyphs.HeartFilled : Glyphs.Heart);
+        ThumbLike.Description = state.Liked ? L.Unlike : L.Like;
+
+        // Track progress in the taskbar button (yellow while paused).
+        var taskbar = TaskbarItemInfo;
+        taskbar.ProgressState = !state.HasTrack || state.Duration <= 0 ? TaskbarItemProgressState.None
+            : state.Playing ? TaskbarItemProgressState.Normal
+            : TaskbarItemProgressState.Paused;
+        taskbar.ProgressValue = state.Duration > 0 ? Math.Clamp(state.Position / state.Duration, 0, 1) : 0;
+
         _tray.Update(state);
         _mini?.Update(state);
         Nav.Update(state);
         _discord.Update(state, _settings.DiscordStatus);
+        Sleep.Observe(state);
+        ResumeAndRemember(state);
+    }
+
+    /// <summary>
+    /// SoundCloud restores the last track after a restart but starts it from 0:00. Jump back to where it
+    /// was (still paused), and remember the position every 30 seconds in case the app doesn't exit cleanly.
+    /// </summary>
+    private void ResumeAndRemember(PlayerState state)
+    {
+        if (!state.HasTrack || state.Duration <= 0) return;
+
+        if (!_resumeChecked)
+        {
+            _resumeChecked = true;
+            Log.Write($"Resume check: url match={state.Url == _settings.ResumeUrl} playing={state.Playing} pos={state.Position} saved={_settings.ResumePosition} duration={state.Duration}");
+            if (state.Url == _settings.ResumeUrl && !state.Playing && state.Position < 2 &&
+                _settings.ResumePosition > 5 && _settings.ResumePosition < state.Duration - 5)
+            {
+                Send("seek:" + (_settings.ResumePosition / state.Duration).ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture));
+                return;
+            }
+        }
+
+        _settings.ResumeUrl = state.Url;
+        _settings.ResumePosition = state.Position;
+        if (DateTime.UtcNow - _resumeSaved > TimeSpan.FromSeconds(30))
+        {
+            _resumeSaved = DateTime.UtcNow;
+            _settings.Save();
+        }
     }
 
     private void OnNewWindowRequested(object? sender, CoreWebView2NewWindowRequestedEventArgs e)
@@ -240,6 +368,7 @@ public partial class MainWindow : Window
     {
         IsExiting = true;
         _mini?.Close();
+        _equalizer?.Close();
         _tray.Dispose();
         _discord.Dispose();
         Web.Dispose();
@@ -250,6 +379,7 @@ public partial class MainWindow : Window
     private void ThumbPrev_Click(object? sender, EventArgs e) => Send("prev");
     private void ThumbPlay_Click(object? sender, EventArgs e) => Send("toggle");
     private void ThumbNext_Click(object? sender, EventArgs e) => Send("next");
+    private void ThumbLike_Click(object? sender, EventArgs e) => Send("like");
 }
 
 public sealed class PlayerState

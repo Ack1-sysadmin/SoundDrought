@@ -19,7 +19,8 @@
   </p>
   <p class="note">
     This program will not transfer any information to other networked systems unless specifically
-    requested by the user or the person installing or operating it.
+    requested by the user or the person installing or operating it. The only exception is the update
+    check below, which sends no personal data and can be turned off.
   </p>
 
   <h2>What the app connects to</h2>
@@ -41,6 +42,11 @@
       <td><b>Discord app on your PC</b></td>
       <td>If Discord is running, SoundDrought tells it which track is playing (title, artist, artwork link, track link) so it can show "Listening to …" on your profile. You can turn this off in the tray menu ("Show Discord status").</td>
       <td><a href="https://discord.com/privacy">Discord</a></td>
+    </tr>
+    <tr>
+      <td><b>GitHub</b> (api.github.com)</td>
+      <td>Update check: shortly after start and every 12 hours, SoundDrought asks GitHub which version is the newest release. The request contains no personal data, only the app version in the user agent. You can turn this off in the tray menu ("Check for updates"). The Microsoft Store version doesn't do this.</td>
+      <td><a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub</a></td>
     </tr>
     <tr>
       <td><b>Microsoft Edge WebView2</b></td>

@@ -48,10 +48,76 @@
     .soundTitle__playButtonHero, .fullHero__titleButton { width: auto !important; display: flex !important; align-items: center; }
     .soundTitle__playButtonHero > *, .fullHero__titleButton > * { flex: none !important; }
     .sd-shuffle--round { margin-right: 12px; }
+
+    /* Upsell banners (Artist Pro / Go+ promos); toggled by the host via the sd-hide-upsell class */
+    .sd-hide-upsell .announcements,
+    .sd-hide-upsell .playControls__panel.m-upsell-styling,
+    .sd-hide-upsell .creatorSubscriptionsButton,
+    .sd-hide-upsell [data-sd-upsell] { display: none !important; }
   `;
   const addStyle = () => (document.head || document.documentElement).appendChild(style);
   if (document.documentElement) addStyle();
   else document.addEventListener('readystatechange', addStyle, { once: true });
+
+  // ---- Equalizer and loudness levelling ----
+  // SoundCloud plays through its own Web Audio graph. Every connection to the speakers
+  // (AudioDestinationNode) is rerouted through our chain: preamp -> 5 EQ bands -> compressor -> out.
+  const EQ_BANDS = [
+    { type: 'lowshelf', frequency: 60 },
+    { type: 'peaking', frequency: 230, Q: 1 },
+    { type: 'peaking', frequency: 910, Q: 1 },
+    { type: 'peaking', frequency: 3600, Q: 1 },
+    { type: 'highshelf', frequency: 14000 },
+  ];
+  let audioSettings = { enabled: false, bands: [0, 0, 0, 0, 0], normalize: false };
+  const chains = new Map(); // AudioContext -> chain
+  window[Symbol.for('sounddrought.audio')] = chains; // diagnostics only (see tests)
+  const connect = AudioNode.prototype.connect;
+
+  function chainFor(ctx) {
+    let chain = chains.get(ctx);
+    if (chain) return chain;
+    const input = ctx.createGain();
+    const filters = EQ_BANDS.map(b => Object.assign(ctx.createBiquadFilter(), { type: b.type }));
+    filters.forEach((f, i) => { f.frequency.value = EQ_BANDS[i].frequency; if (EQ_BANDS[i].Q) f.Q.value = EQ_BANDS[i].Q; });
+    const compressor = ctx.createDynamicsCompressor();
+    const output = ctx.createGain();
+    [input, ...filters, compressor, output].reduce((a, b) => (connect.call(a, b), b));
+    connect.call(output, ctx.destination);
+    chain = { ctx, input, filters, compressor, output };
+    chains.set(ctx, chain);
+    applyAudio(chain);
+    return chain;
+  }
+
+  function applyAudio(chain) {
+    const { ctx, input, filters, compressor, output } = chain;
+    const t = ctx.currentTime, smooth = 0.05;
+    const gains = audioSettings.enabled ? audioSettings.bands : [0, 0, 0, 0, 0];
+    filters.forEach((f, i) => f.gain.setTargetAtTime(gains[i] || 0, t, smooth));
+    // Boosting bands would clip, so lower the input by the biggest boost.
+    const boost = Math.max(0, ...gains);
+    input.gain.setTargetAtTime(Math.pow(10, -boost / 20), t, smooth);
+    // Loudness levelling: compress loud parts, lift the result a little. Off = transparent.
+    const on = audioSettings.normalize;
+    compressor.threshold.setTargetAtTime(on ? -24 : 0, t, smooth);
+    compressor.knee.setTargetAtTime(on ? 24 : 0, t, smooth);
+    compressor.ratio.setTargetAtTime(on ? 4 : 1, t, smooth);
+    compressor.attack.setTargetAtTime(0.01, t, smooth);
+    compressor.release.setTargetAtTime(0.25, t, smooth);
+    output.gain.setTargetAtTime(on ? Math.pow(10, 5 / 20) : 1, t, smooth);
+  }
+
+  // The chain itself is wired with the original connect, so only SoundCloud's calls end up here.
+  AudioNode.prototype.connect = function (target, ...rest) {
+    if (target instanceof AudioDestinationNode) target = chainFor(target.context).input;
+    return connect.call(this, target, ...rest);
+  };
+  const disconnect = AudioNode.prototype.disconnect;
+  AudioNode.prototype.disconnect = function (target, ...rest) {
+    if (target instanceof AudioDestinationNode) target = chainFor(target.context).input;
+    return disconnect.call(this, ...(target === undefined ? [] : [target, ...rest]));
+  };
 
   const clicks = {
     toggle: '.playControls__play',
@@ -103,7 +169,20 @@
       host.postMessage(state);
     }
   }
-  setInterval(() => { report(); addShuffleButtons(); }, 500);
+  setInterval(() => { report(); addShuffleButtons(); markUpsells(); }, 500);
+
+  // Promo modules are recognised by their heading text and marked; CSS hides them while enabled.
+  const upsellHeading = /^(künstler-tools|artist tools|next pro|go\+|try go\+|upgrade)$/i;
+  const upsellText = /freischalten von artist-tools|unlock artist tools|artist pro testen|try artist pro/i;
+  function markUpsells() {
+    if (!document.documentElement.classList.contains('sd-hide-upsell')) return;
+    for (const el of document.querySelectorAll('.l-sidebar-right h3, .l-sidebar-right h2, .l-sidebar-right a, .l-sidebar-right span')) {
+      const t = el.textContent.trim();
+      if (!upsellHeading.test(t) && !upsellText.test(t)) continue;
+      const module = el.closest('.sidebarModule, [class*="sidebarModule"], [class*="Module"], section, aside > div');
+      if (module && !module.hasAttribute('data-sd-upsell')) module.setAttribute('data-sd-upsell', '');
+    }
+  }
 
   // ---- "Play shuffled" for playlists and likes ----
 
@@ -160,15 +239,24 @@
     }
   }
 
-  function seek(fraction) {
-    const bar = q('.playbackTimeline__progressWrapper');
-    if (!bar) return;
-    const r = bar.getBoundingClientRect();
-    // iew makes the browser fill in pageX/pageY (which include the scroll offset) like for real clicks.
-    const init = { view: window, bubbles: true, button: 0, clientX: r.left + r.width * fraction, clientY: r.top + r.height / 2 };
-    for (const type of ['mousedown', 'mouseup', 'click']) bar.dispatchEvent(new MouseEvent(type, init));
+  // Right after a page load SoundCloud ignores clicks on the timeline for a moment, so click
+  // until the position has really moved (at most ~10 s).
+  async function seek(fraction) {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const bar = q('.playbackTimeline__progressWrapper');
+      const max = Number(bar?.getAttribute('aria-valuemax')) || 0;
+      if (bar && max && q('.playbackTimeline.is-scrubbable')) {
+        const r = bar.getBoundingClientRect();
+        // `view` makes the browser fill in pageX/pageY (which include the scroll offset) like for real clicks.
+        const init = { view: window, bubbles: true, button: 0, clientX: r.left + r.width * fraction, clientY: r.top + r.height / 2 };
+        for (const type of ['mousedown', 'mouseup', 'click']) bar.dispatchEvent(new MouseEvent(type, init));
+        await sleep(250);
+        const now = Number(bar.getAttribute('aria-valuenow')) || 0;
+        if (Math.abs(now - max * fraction) < Math.max(5, max * 0.02)) return;
+      }
+      await sleep(500);
+    }
   }
-
   // Drives SoundCloud's own (hidden) volume slider, so its UI and saved setting stay in sync.
   function setVolume(value) {
     const slider = q('.volume__sliderWrapper');
@@ -177,7 +265,7 @@
     const target = Math.min(1, Math.max(0, value));
     const click = v => {
       // The slider measures from its handle's center, ~3% of the track below the click point.
-      // Without iew, pageY would ignore the scroll offset and SoundCloud would read every click as 100%.
+      // Without `view`, pageY would ignore the scroll offset and SoundCloud would read every click as 100%.
       const init = { view: window, bubbles: true, button: 0, buttons: 1, clientX: track.left + track.width / 2,
                      clientY: track.bottom - track.height * v + track.height * 0.03 };
       slider.dispatchEvent(new MouseEvent('mousedown', init));
@@ -255,6 +343,9 @@
     else if (cmd.startsWith('volumeBy:')) stepVolume(Number(cmd.slice(9)));
     else if (cmd === 'signin') signIn();
     else if (cmd === 'back') history.back();
+    else if (cmd === 'pause') { if (q('.playControls__play.playing')) q('.playControls__play').click(); }
+    else if (cmd.startsWith('eq:')) { audioSettings = JSON.parse(cmd.slice(3)); chains.forEach(applyAudio); }
+    else if (cmd.startsWith('upsell:')) document.documentElement.classList.toggle('sd-hide-upsell', cmd === 'upsell:hide');
     else if (cmd === 'forward') history.forward();
     else if (clicks[cmd]) q(clicks[cmd])?.click();
     setTimeout(report, 150);

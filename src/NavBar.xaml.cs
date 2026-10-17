@@ -171,6 +171,7 @@ public partial class NavBar : UserControl
             menu.Items.Add(Item(L.Upload, () => Go("/upload")));
         }
         menu.Items.Add(Item(L.MiniPlayer, () => _host?.ShowMini(), L.MiniPlayerShortcut));
+        menu.Items.Add(Item(L.Equalizer + " …", () => _host?.ShowEqualizer()));
         menu.Items.Add(Separator());
         menu.Items.Add(Item(L.SoundCloudSettings, () => Go("/settings")));
         if (_state.LoggedIn)

@@ -6,8 +6,6 @@ namespace SoundDrought;
 internal static partial class Native
 {
     private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
-    private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
-    private const int DWMWCP_ROUND = 2;
 
     [LibraryImport("dwmapi.dll")]
     private static partial int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
@@ -35,10 +33,18 @@ internal static partial class Native
         return GetSystemMetricsForDpi(SM_CXSIZEFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
     }
 
-    /// <summary>Rounded corners for borderless windows (Windows 11; ignored on Windows 10).</summary>
-    public static void UseRoundedCorners(IntPtr hwnd)
+    private const int APPMODEL_ERROR_NO_PACKAGE = 15700;
+
+    [LibraryImport("kernel32.dll")]
+    private static partial int GetCurrentPackageFullName(ref uint length, IntPtr name);
+
+    /// <summary>True when running as an MSIX package (Microsoft Store build).</summary>
+    public static bool IsPackaged { get; } = DetectPackage();
+
+    private static bool DetectPackage()
     {
-        int preference = DWMWCP_ROUND;
-        DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref preference, sizeof(int));
+        uint length = 0;
+        return GetCurrentPackageFullName(ref length, IntPtr.Zero) != APPMODEL_ERROR_NO_PACKAGE;
     }
+
 }

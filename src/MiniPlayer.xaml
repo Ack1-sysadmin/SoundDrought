@@ -3,9 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:SoundDrought"
         Title="Mini-Player" Icon="/Assets/app.ico"
-        Width="380" Height="104"
+        SizeToContent="WidthAndHeight"
         WindowStyle="None" ResizeMode="NoResize" Topmost="True"
-        Background="#181818" Foreground="#F2F2F2"
+        AllowsTransparency="True" Background="Transparent" Foreground="#F2F2F2"
         FontFamily="Segoe UI Variable Text, Segoe UI"
         MouseLeftButtonDown="OnDrag">
     <Window.Resources>
@@ -97,7 +97,16 @@
         </Style>
     </Window.Resources>
 
-    <Grid>
+    <!-- Frame draws the rounded window (the window itself is transparent so opacity works);
+         Root scales the whole player (size presets); one of the two layouts is visible -->
+    <Border x:Name="Frame" Background="#181818" BorderBrush="#2E2E2E" BorderThickness="1" CornerRadius="8">
+    <Grid x:Name="Root">
+        <Grid.LayoutTransform>
+            <ScaleTransform x:Name="Scale" ScaleX="1" ScaleY="1" />
+        </Grid.LayoutTransform>
+
+    <!-- Compact layout -->
+    <Grid x:Name="CompactLayout" Width="380" Height="104">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="104" />
             <ColumnDefinition Width="*" />
@@ -175,4 +184,51 @@
             </Rectangle>
         </Grid>
     </Grid>
+
+    <!-- Cover-only layout: artwork, controls appear on hover -->
+    <Grid x:Name="CoverLayout" Width="220" Height="220" Visibility="Collapsed"
+          MouseEnter="OnCoverHover" MouseLeave="OnCoverHover">
+        <Border>
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#FF8800" Offset="0" />
+                    <GradientStop Color="#FF3300" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
+            <Image x:Name="CoverArt" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" />
+        </Border>
+        <Grid x:Name="CoverOverlay" Opacity="0">
+            <Grid.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#99000000" Offset="0" />
+                    <GradientStop Color="#22000000" Offset="0.4" />
+                    <GradientStop Color="#E6000000" Offset="1" />
+                </LinearGradientBrush>
+            </Grid.Background>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,4,4,0">
+                <Button Style="{StaticResource SmallIconButton}" Content="&#xE740;" Foreground="#E0E0E0" ToolTip="{x:Static local:L.FullWindow}" AutomationProperties.Name="{x:Static local:L.FullWindow}" Click="OnExpand" />
+                <Button Style="{StaticResource SmallIconButton}" Content="&#xE8BB;" Foreground="#E0E0E0" ToolTip="{x:Static local:L.HideToTray}" AutomationProperties.Name="{x:Static local:L.HideToTray}" Click="OnHide" />
+            </StackPanel>
+            <StackPanel VerticalAlignment="Bottom" Margin="12,0,12,12">
+                <TextBlock x:Name="CoverTitle" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="CoverArtist" FontSize="12" Foreground="#C8C8C8" TextTrimming="CharacterEllipsis" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0">
+                    <Button Style="{StaticResource IconButton}" Content="&#xE892;" Foreground="#F0F0F0" ToolTip="{x:Static local:L.Previous}" Click="OnPrev" />
+                    <Button x:Name="CoverPlay" Style="{StaticResource IconButton}" Content="&#xE768;" FontSize="22" Foreground="#FFFFFF" ToolTip="{x:Static local:L.Play}" Click="OnPlay" />
+                    <Button Style="{StaticResource IconButton}" Content="&#xE893;" Foreground="#F0F0F0" ToolTip="{x:Static local:L.Next}" Click="OnNext" />
+                    <Button x:Name="CoverLike" Style="{StaticResource IconButton}" Content="&#xEB51;" Foreground="#F0F0F0" ToolTip="{x:Static local:L.Like}" Click="OnLike" />
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+        <Grid x:Name="CoverTimeline" Height="4" VerticalAlignment="Bottom" Background="#66000000" Cursor="Hand"
+              MouseLeftButtonDown="OnSeek">
+            <Rectangle Fill="#FF5500">
+                <Rectangle.RenderTransform>
+                    <ScaleTransform x:Name="CoverProgressScale" ScaleX="0" />
+                </Rectangle.RenderTransform>
+            </Rectangle>
+        </Grid>
+    </Grid>
+    </Grid>
+    </Border>
 </Window>

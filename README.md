@@ -19,6 +19,13 @@ things a browser tab can't do:
 - **Mini player** (`Ctrl+M`): always on top, with artwork, like button, volume and a seek bar
 - **Volume with the mouse wheel**: anywhere over the mini player, or over the player bar in the main window
 - **Play shuffled**: a shuffle button on playlists and on likes pages starts the list in random order
+- **Equalizer** with presets and **loudness levelling**, for sets that jump between quiet and loud
+- **Resume where you left off**: after a restart the last track waits at the same position
+- **Sleep timer** in the tray menu: stop after 15–90 minutes or after the current track
+- **Taskbar extras**: progress in the taskbar button, a like button in the preview and a jump list (Likes, Feed, History, Mini player)
+- **Mini player variants**: compact or cover only, three sizes, opacity, always on top (right-click the mini player)
+- **Hides promo banners** (Artist Pro and similar), can be turned off in the tray menu
+- **Update notice** in the tray when a new version is out
 - **Keeps playing in the tray** when you close the window
 - **Discord status**: "Listening to …" with the track, artwork and a link to it (can be turned off in the tray menu)
 - **Start with Windows**, straight to the tray
@@ -73,7 +80,7 @@ App data, including the WebView2 profile, lives in `%LOCALAPPDATA%\SoundDrought`
 
 SoundDrought has no servers, analytics or telemetry. It connects to soundcloud.com (the website you use),
 to the sign-in provider you pick there, and, if Discord is running, tells your local Discord app which
-track is playing (you can turn that off in the tray menu). Details: [privacy policy](https://ack1-sysadmin.github.io/SoundDrought/privacy.html).
+track is playing (you can turn that off in the tray menu). It also asks GitHub every 12 hours whether a new version is out (no personal data; can be turned off). Details: [privacy policy](https://ack1-sysadmin.github.io/SoundDrought/privacy.html).
 
 ## Code signing policy
 

@@ -2,7 +2,10 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 
@@ -22,16 +25,22 @@ public partial class MiniPlayer : Window
         _main = main;
         _settings = settings;
 
-        var area = SystemParameters.WorkArea;
-        Left = settings.MiniLeft ?? area.Right - Width - 16;
-        Top = settings.MiniTop ?? area.Bottom - Height - 16;
-        if (!area.IntersectsWith(new Rect(Left, Top, Width, Height)))
+        ApplyVariant();
+        // The size comes from the layout (SizeToContent), so place the window once it is measured.
+        Loaded += (_, _) =>
         {
-            Left = area.Right - Width - 16;
-            Top = area.Bottom - Height - 16;
-        }
+            var area = SystemParameters.WorkArea;
+            Left = settings.MiniLeft ?? area.Right - ActualWidth - 16;
+            Top = settings.MiniTop ?? area.Bottom - ActualHeight - 16;
+            KeepOnScreen();
+        };
+        SizeChanged += (_, _) => { if (IsLoaded) KeepOnScreen(); };
 
-        SourceInitialized += (_, _) => Native.UseRoundedCorners(new WindowInteropHelper(this).Handle);
+        MouseRightButtonUp += (_, e) => { ShowVariantMenu(); e.Handled = true; };
+
+        // Clip the content to the rounded frame.
+        Frame.SizeChanged += (_, _) =>
+            Frame.Clip = new System.Windows.Media.RectangleGeometry(new Rect(0, 0, Frame.ActualWidth, Frame.ActualHeight), 8, 8);
         KeyDown += (_, e) =>
         {
             if (e.Key == Key.M && Keyboard.Modifiers == ModifierKeys.Control) _main.ShowMain();
@@ -61,6 +70,14 @@ public partial class MiniPlayer : Window
         System.Windows.Automation.AutomationProperties.SetName(MuteButton, (string)MuteButton.ToolTip);
 
         ProgressScale.ScaleX = state.Duration > 0 ? Math.Clamp(state.Position / state.Duration, 0, 1) : 0;
+        CoverProgressScale.ScaleX = ProgressScale.ScaleX;
+        CoverTitle.Text = TrackTitle.Text;
+        CoverArtist.Text = state.Artist;
+        CoverPlay.Content = PlayButton.Content;
+        CoverPlay.ToolTip = PlayButton.ToolTip;
+        CoverLike.Content = LikeButton.Content;
+        if (state.Liked) CoverLike.Foreground = Glyphs.Accent;
+        else CoverLike.Foreground = System.Windows.Media.Brushes.WhiteSmoke;
         Time.Text = state.Duration > 0 ? $"{FormatTime(state.Position)} / {FormatTime(state.Duration)}" : "";
 
         if (state.Artwork != _artworkUrl)
@@ -69,6 +86,7 @@ public partial class MiniPlayer : Window
             Artwork.Source = Uri.TryCreate(state.Artwork, UriKind.Absolute, out var uri)
                 ? new BitmapImage(uri)
                 : null;
+            CoverArt.Source = Artwork.Source;
         }
     }
 
@@ -128,7 +146,8 @@ public partial class MiniPlayer : Window
 
     private void OnSeek(object sender, MouseButtonEventArgs e)
     {
-        var fraction = e.GetPosition(Timeline).X / Timeline.ActualWidth;
+        var bar = (FrameworkElement)sender;
+        var fraction = e.GetPosition(bar).X / bar.ActualWidth;
         _main.Send("seek:" + fraction.ToString("0.###", CultureInfo.InvariantCulture));
         e.Handled = true; // don't start a window drag
     }
@@ -140,6 +159,72 @@ public partial class MiniPlayer : Window
     private void OnMute(object sender, RoutedEventArgs e) => _main.Send("mute");
     private void OnExpand(object sender, RoutedEventArgs e) => _main.ShowMain();
     private void OnHide(object sender, RoutedEventArgs e) => Hide();
+
+    // ---- Variants: layout, size, opacity, always on top ----
+
+    private static readonly (double Scale, Func<string> Label)[] Sizes =
+        [(0.85, () => L.MiniSizeSmall), (1.0, () => L.MiniSizeMedium), (1.25, () => L.MiniSizeLarge)];
+    private static readonly double[] Opacities = [1.0, 0.9, 0.75, 0.6];
+
+    private void ApplyVariant()
+    {
+        CompactLayout.Visibility = _settings.MiniCover ? Visibility.Collapsed : Visibility.Visible;
+        CoverLayout.Visibility = _settings.MiniCover ? Visibility.Visible : Visibility.Collapsed;
+        Scale.ScaleX = Scale.ScaleY = _settings.MiniScale;
+        Topmost = _settings.MiniTopmost;
+        Opacity = _settings.MiniOpacity;
+    }
+
+    private void ChangeVariant(Action<Settings> change)
+    {
+        change(_settings);
+        _settings.Save();
+        ApplyVariant();
+    }
+
+    private void ShowVariantMenu()
+    {
+        var menu = new ContextMenu
+        {
+            Style = (Style)Application.Current.Resources["DarkMenu"],
+            PlacementTarget = this,
+            Placement = PlacementMode.MousePoint,
+        };
+        MenuItem Item(string text, bool check, Action action)
+        {
+            var item = new MenuItem { Header = (check ? "✓  " : "     ") + text, Style = (Style)Application.Current.Resources["DarkMenuItem"] };
+            item.Click += (_, _) => action();
+            return item;
+        }
+        Separator Line() => new() { Style = (Style)Application.Current.Resources["DarkSeparator"] };
+
+        menu.Items.Add(Item(L.MiniLayoutCompact, !_settings.MiniCover, () => ChangeVariant(s => s.MiniCover = false)));
+        menu.Items.Add(Item(L.MiniLayoutCover, _settings.MiniCover, () => ChangeVariant(s => s.MiniCover = true)));
+        menu.Items.Add(Line());
+        foreach (var (scale, label) in Sizes)
+            menu.Items.Add(Item(label(), Math.Abs(_settings.MiniScale - scale) < 0.01, () => ChangeVariant(s => s.MiniScale = scale)));
+        menu.Items.Add(Line());
+        foreach (var opacity in Opacities)
+            menu.Items.Add(Item(L.MiniOpacity((int)(opacity * 100)), Math.Abs(_settings.MiniOpacity - opacity) < 0.01, () => ChangeVariant(s => s.MiniOpacity = opacity)));
+        menu.Items.Add(Line());
+        menu.Items.Add(Item(L.AlwaysOnTop, _settings.MiniTopmost, () => ChangeVariant(s => s.MiniTopmost = !s.MiniTopmost)));
+        menu.Items.Add(Line());
+        menu.Items.Add(Item(L.FullWindow, false, _main.ShowMain));
+        menu.IsOpen = true;
+    }
+
+    private void OnCoverHover(object sender, MouseEventArgs e)
+    {
+        var show = CoverLayout.IsMouseOver;
+        CoverOverlay.BeginAnimation(OpacityProperty, new DoubleAnimation(show ? 1 : 0, TimeSpan.FromMilliseconds(150)));
+    }
+
+    private void KeepOnScreen()
+    {
+        var area = SystemParameters.WorkArea;
+        Left = Math.Clamp(Left, area.Left, Math.Max(area.Left, area.Right - ActualWidth));
+        Top = Math.Clamp(Top, area.Top, Math.Max(area.Top, area.Bottom - ActualHeight));
+    }
 
     protected override void OnLocationChanged(EventArgs e)
     {
