@@ -1,4 +1,5 @@
-﻿param([string]$Out, [string]$PreviewPng)
+﻿# Usage: make-icon.ps1 -Out src\Assets\app.ico [-PreviewPng preview.png] [-MsixAssets packaging\msix\Assets]
+param([string]$Out, [string]$PreviewPng, [string]$MsixAssets)
 Add-Type -AssemblyName System.Drawing
 
 # SoundDrought icon: a white sun on a hot orange square; the sun's disc is cut by equalizer bars.
@@ -60,6 +61,25 @@ function To-Png($bmp) {
     $ms = New-Object System.IO.MemoryStream
     $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)
     return ,$ms.ToArray()
+}
+
+if ($MsixAssets) {
+    # Microsoft Store / MSIX logos (scale-100 plus the taskbar's target sizes).
+    New-Item -ItemType Directory -Force $MsixAssets | Out-Null
+    $save = { param($bmp, $name) $bmp.Save((Join-Path $MsixAssets $name), [System.Drawing.Imaging.ImageFormat]::Png); $bmp.Dispose() }
+    & $save (New-Bitmap 50) 'StoreLogo.png'
+    & $save (New-Bitmap 150) 'Square150x150Logo.png'
+    & $save (New-Bitmap 44) 'Square44x44Logo.png'
+    foreach ($t in 16, 24, 32, 48, 256) {
+        & $save (New-Bitmap $t) "Square44x44Logo.targetsize-$t.png"
+        & $save (New-Bitmap $t) "Square44x44Logo.targetsize-${t}_altform-unplated.png"
+    }
+    # Wide tile: the icon centered on a transparent 310x150 canvas.
+    $wide = New-Object System.Drawing.Bitmap 310, 150
+    $g = [System.Drawing.Graphics]::FromImage($wide); $g.Clear([System.Drawing.Color]::Transparent)
+    $icon = New-Bitmap 110; $g.DrawImage($icon, 100, 20, 110, 110); $icon.Dispose(); $g.Dispose()
+    & $save $wide 'Wide310x150Logo.png'
+    if (-not $Out) { return }
 }
 
 $sizes = 16, 20, 24, 32, 40, 48, 64, 256

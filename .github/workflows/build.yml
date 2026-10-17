@@ -61,3 +61,28 @@ jobs:
           body: |
             **Code signing policy:** https://ack1-sysadmin.github.io/SoundDrought/code-signing.html
           generate_release_notes: true
+
+  # Microsoft Store package (unsigned; the Store signs it). Runs once the Partner Center identity is
+  # stored as repository variables STORE_IDENTITY_NAME, STORE_PUBLISHER and STORE_PUBLISHER_DISPLAY_NAME.
+  store:
+    if: github.ref_type == 'tag' && vars.STORE_IDENTITY_NAME != ''
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build MSIX
+        shell: pwsh
+        run: |
+          ./tools/build-msix.ps1 -Version ('${{ github.ref_name }}'.TrimStart('v')) `
+            -IdentityName '${{ vars.STORE_IDENTITY_NAME }}' `
+            -Publisher '${{ vars.STORE_PUBLISHER }}' `
+            -PublisherDisplayName '${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}'
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: store-msix
+          path: out/msix/*.msix
