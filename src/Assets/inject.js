@@ -34,6 +34,20 @@
     @media (max-width: 520px) {
       .playControls__timeline { display: none !important; }
     }
+
+    /* "Play shuffled" buttons added by SoundDrought */
+    .sd-shuffle {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border: 0; cursor: pointer; font: 600 14px/1 inherit; color: #121212; background: #f2f2f2;
+      transition: transform .1s ease, background .15s ease;
+    }
+    .sd-shuffle:hover { background: #fff; transform: scale(1.04); }
+    .sd-shuffle svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+    .sd-shuffle--round { width: 44px; height: 44px; border-radius: 50%; margin-left: 12px; vertical-align: middle; }
+    .sd-shuffle--pill { height: 36px; padding: 0 16px; border-radius: 18px; margin: 0 0 16px; }
+    .soundTitle__playButtonHero, .fullHero__titleButton { width: auto !important; display: flex !important; align-items: center; }
+    .soundTitle__playButtonHero > *, .fullHero__titleButton > * { flex: none !important; }
+    .sd-shuffle--round { margin-right: 12px; }
   `;
   const addStyle = () => (document.head || document.documentElement).appendChild(style);
   if (document.documentElement) addStyle();
@@ -89,7 +103,62 @@
       host.postMessage(state);
     }
   }
-  setInterval(report, 500);
+  setInterval(() => { report(); addShuffleButtons(); }, 500);
+
+  // ---- "Play shuffled" for playlists and likes ----
+
+  const shuffleLabel = navigator.language.startsWith('de') ? 'Zufallswiedergabe' : 'Play shuffled';
+  const shuffleIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.59 9.17 5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>'; // Material Icons "shuffle", Apache 2.0
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  function makeShuffleButton(kind, getPlayButton) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `sd-shuffle sd-shuffle--${kind}`;
+    button.title = shuffleLabel;
+    button.setAttribute('aria-label', shuffleLabel);
+    button.innerHTML = shuffleIcon + (kind === 'pill' ? `<span>${shuffleLabel}</span>` : '');
+    button.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      playShuffled(getPlayButton());
+    });
+    return button;
+  }
+
+  // Starts the list, turns on SoundCloud's shuffle and skips ahead, so the first track is random too.
+  async function playShuffled(playButton) {
+    if (!playButton) return;
+    const alreadyPlaying = playButton.classList.contains('sc-button-pause');
+    if (!alreadyPlaying) {
+      playButton.click();
+      for (let i = 0; i < 40 && !q('.playControls__play.playing'); i++) await sleep(100);
+    }
+    const shuffle = q('.shuffleControl');
+    if (shuffle && !shuffle.classList.contains('m-shuffling')) shuffle.click();
+    await sleep(150);
+    q('.skipControl__next')?.click();
+    setTimeout(report, 300);
+  }
+
+  function addShuffleButtons() {
+    // Playlists, albums and SoundCloud's own playlists/stations: next to the big play button.
+    const heroPlay = q('.soundTitle__playButtonHero .sc-button-play, .fullHero__titleButton .sc-button-play');
+    if (heroPlay && !heroPlay.parentElement.querySelector('.sd-shuffle')) {
+      heroPlay.insertAdjacentElement('afterend', makeShuffleButton('round', () => heroPlay));
+    }
+
+    // Likes (your own and other people's): a button above the list, playing it from its first track.
+    if (/^\/[^/]+\/likes\/?$/.test(location.pathname) && !q('.sd-shuffle--pill')) {
+      const firstPlay = [...document.querySelectorAll('.l-main .sc-button-play, .l-content .sc-button-play')]
+        .find(b => !b.closest('.playControls') && b.getBoundingClientRect().width > 0);
+      const list = firstPlay?.closest('.lazyLoadingList, .badgeList, .soundList, ul');
+      if (list) {
+        const firstButtonOf = () => [...list.querySelectorAll('.sc-button-play')].find(b => !b.closest('.playControls'));
+        list.insertAdjacentElement('beforebegin', makeShuffleButton('pill', firstButtonOf));
+      }
+    }
+  }
 
   function seek(fraction) {
     const bar = q('.playbackTimeline__progressWrapper');
@@ -146,10 +215,12 @@
     bubbleTimer = setTimeout(() => (bubble.style.opacity = '0'), 900);
   }
 
-  // Mouse wheel over the player bar changes the volume in 5% steps.
+  // Mouse wheel over the player bar changes the volume in 5% steps. The "Next up" queue and the
+  // upsell panel live inside the player bar too; they must keep scrolling normally.
   let wheel = 0;
   document.addEventListener('wheel', e => {
     if (!(e.target instanceof Element) || !e.target.closest('.playControls')) return;
+    if (e.target.closest('.playControls__queue, .playControls__panel')) return;
     e.preventDefault();
     wheel += e.deltaY;
     if (Math.abs(wheel) < 40) return; // touchpads send many small deltas

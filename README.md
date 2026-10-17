@@ -18,6 +18,7 @@ things a browser tab can't do:
 - **Taskbar thumbnail buttons**: ⏮ ⏯ ⏭
 - **Mini player** (`Ctrl+M`): always on top, with artwork, like button, volume and a seek bar
 - **Volume with the mouse wheel**: anywhere over the mini player, or over the player bar in the main window
+- **Play shuffled**: a shuffle button on playlists and on likes pages starts the list in random order
 - **Keeps playing in the tray** when you close the window
 - **Discord status**: "Listening to …" with the track, artwork and a link to it (can be turned off in the tray menu)
 - **Start with Windows**, straight to the tray

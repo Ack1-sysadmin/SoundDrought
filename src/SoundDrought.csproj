@@ -9,7 +9,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <RootNamespace>SoundDrought</RootNamespace>
-    <Version>0.3.3</Version>
+    <Version>0.3.4</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- File properties shown by Windows and read by virus scanners -->
